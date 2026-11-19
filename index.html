@@ -208,7 +208,7 @@ if(S.won||T[p.id]>0||(p.cur?S.mn:S.fe)<cc(p))return;
 if(p.cur)S.mn-=cc(p);else S.fe-=cc(p);T[p.id]=p.cd*cm(p);S.sus=Math.min(100,S.sus+p.sus*(S.rel.martir?0.8:1)*(S.tr.ast||1)*(1-rb("sus")/100)*(tf(6)&&p.id==="mil"?0.5:1));p.run();if(S.c[p.id]!==undefined)S.c[p.id]++;S.ct=Math.max(0,Math.min(100,S.ct+({serm:2,mil:8,vis:4,dev:-10,diz:-12,sub:-2,tp:5}[p.id]||0)));check();draw()}
 function check(){
 if(S.sus>=100){var l=Math.ceil(S.fol*(tf(7)?0.2:0.4));S.fol=Math.max(1,S.fol-l);S.fan=Math.min(S.fan,S.fol);S.sus=40;S.c.inv++;S.ct=Math.max(0,S.ct-15);say("Investigação! "+l+" seguidores fogem do culto.")}
-if(S.fol>=1000&&!S.vit){S.vit=true;S.pts+=2000;say("Mil almas. O culto é imenso e ninguém mais duvida de você.");victory()}}
+while(S.fol>=msThr(S.nm||0)){var mt=msThr(S.nm||0);S.nm=(S.nm||0)+1;S.pts+=Math.round(mt*2);say(fmtN(mt)+" almas seguem você. +"+fmtN(mt*2)+" pontos.","b34")}}
 var evs=[
 function(){var l=Math.min(S.fol-1,3);if(l>0){S.fol-=l;S.fan=Math.min(S.fan,S.fol);say("Um fiel duvida e leva "+(l-1)+" amigos consigo.")}},
 function(){var g=10+Math.floor(S.fol/5);S.fe+=g;say("Doação anônima: +"+g+" de fé.")},
@@ -252,16 +252,26 @@ var R={vela:["Vela eterna","+10% de fé"],martir:["Marca do mártir","desconfian
 var MI={1:"mseg",2:"mmil",3:"mfan",4:"mseg",5:"martir",6:"mfan",7:"mseg",8:"vis",9:"mseg",10:"pts",11:"vela"};
 var lastM="";
 function mis(){
-M.forEach(function(m){if(!S.done[m.id]&&m.v()>=m.g){S.done[m.id]=1;var bo=tf(10)?1.5:1;S.pts+=Math.round(m.pts*bo);var pr="";if(m.fe){S.fe+=Math.round(m.fe*bo);pr="+"+m.fe+" de fé"}if(m.mn){S.mn+=Math.round(m.mn*bo);pr="+"+m.mn+" de dinheiro"}if(m.r){S.rel[m.r]=1;pr=R[m.r][0]+" ("+R[m.r][1]+")"}say("Missão cumprida: "+m.t+". Prêmio: "+pr+" e +"+m.pts+" pontos.")}});
+for(var gi=S.em||0;gi<(S.em||0)+3;gi++)if(!M.some(function(m){return m.id==="e"+gi}))M.push(gm(gi));
+M.forEach(function(m){if(!S.done[m.id]&&m.v()>=m.g){S.done[m.id]=1;if(m.id[0]==="e")S.em=(S.em||0)+1;var bo=tf(10)?1.5:1;S.pts+=Math.round(m.pts*bo);var pr="";if(m.fe){S.fe+=Math.round(m.fe*bo);pr="+"+m.fe+" de fé"}if(m.mn){S.mn+=Math.round(m.mn*bo);pr="+"+m.mn+" de dinheiro"}if(m.r){S.rel[m.r]=1;pr=R[m.r][0]+" ("+R[m.r][1]+")"}say("Missão cumprida: "+m.t+". Prêmio: "+pr+" e +"+m.pts+" pontos.")}});
 var a=M.filter(function(m){return !S.done[m.id]}).sort(function(x,y){return (x.k||x.id*10)-(y.k||y.id*10)}).slice(0,3);
 var h=a.map(function(m){var pr=m.r?R[m.r][0]:m.mn?"+"+m.mn+" de dinheiro":"+"+m.fe+" de fé";return "<p><img class=\"mi\" alt=\"\" src=\""+(m.ic?LI[m.ic]:IC[MI[m.id]])+"\"><span><b>"+m.t+"</b> ("+Math.min(m.g,Math.floor(m.v()))+"/"+m.g+")<br><small>Prêmio: "+pr+" e "+m.pts+" pontos</small></span></p>"}).join("");
 var rs=Object.keys(S.rel).map(function(k){return "<img class=\"ri\" title=\""+R[k][0]+"\" alt=\""+R[k][0]+"\" src=\""+IC[k]+"\">"}).join("");
 var out=qhtml()+(h||"<p>Todas as missões cumpridas.</p>")+(rs?"<p><small>Relíquias: "+rs+"</small></p>":"");
 if(out!==lastM){lastM=out;document.getElementById("mis").innerHTML=out}}
+function ctk(f){return f<1000?f*0.0004:0.4*(1+Math.log10(f/1000)*0.5)}
+function skf(f){return f<100?f*0.01:1+Math.log10(f/100)*0.5}
+function msThr(i){return [1,2.5,5][i%3]*1000*Math.pow(10,Math.floor(i/3))}
+function fmtN(n){n=Math.floor(n);if(n<1e6)return n.toLocaleString("pt-BR");var u=[[1e15,"qd"],[1e12,"tri"],[1e9,"bi"],[1e6,"mi"]];for(var i=0;i<u.length;i++)if(n>=u[i][0])return (n/u[i][0]).toFixed(2).replace(".",",")+" "+u[i][1];return String(n)}
+function gm(i){var t=i%3,l=Math.floor(i/3),g,m;
+if(t===0){g=Math.round(750*Math.pow(1.6,l+1)/50)*50;m={t:"Chegar a "+fmtN(g)+" seguidores",g:g,v:function(){return S.fol},fe:Math.round(g*0.4),pts:g*2,ic:"b34"}}
+else if(t===1){g=30+l*20;m={t:"Realizar "+g+" milagres no total",g:g,v:function(){return S.c.mil},mn:g*10,pts:g*15,ic:"b16"}}
+else{g=30+l*15;m={t:"Tomar "+g+" decisões no total",g:g,v:function(){return S.c.dec},fe:g*8,pts:g*20,ic:"b24"}}
+m.id="e"+i;m.k=1e6+i;return m}
 var acL=0,acR=0,lost=0;
 function ai(dt){
 var fre=S.fol-S.fan;
-S.ct=Math.max(0,S.ct-(0.5+fre*0.0004)/(1+0.2*S.c.tp)*(S.tr.aco||1)*(1-rb("ct")/100)*dt);
+S.ct=Math.max(0,S.ct-(0.5+ctk(fre))/(1+0.2*S.c.tp)*(S.tr.aco||1)*(1-rb("ct")/100)*dt);
 var m=S.ct<30?0:S.ct<70?1:2;
 if(m!==S.mood){S.mood=m;say(["O rebanho murmura, revoltado.","O rebanho está inquieto, mas ainda fiel.","O rebanho está radiante e fala de você pelas ruas."][m])}
 if(S.ct<30){
@@ -270,7 +280,7 @@ if(acL>=1){var n=Math.min(Math.floor(acL),S.fol-S.fan-1);acL-=Math.floor(acL);if
 if(lost>=5){say(lost+" descontentes abandonaram o culto.");lost=0}
 S.sus=Math.min(100,S.sus+1.8*dt)}
 if(S.ct>70){acR+=fre*0.01*dt;if(acR>=1){var g=Math.floor(acR);acR-=g;S.fol+=g}}
-S.sus=Math.min(100,S.sus+(S.fan*0.01+(tf(5)?0.3:0))*dt);
+S.sus=Math.min(100,S.sus+(skf(S.fan)+(tf(5)?0.3:0))*dt);
 if(tf(3)){acT+=0.5*dt;if(acT>=1){var q=Math.floor(acT);acT-=q;S.fol+=q}}
 acP+=passR()*dt;if(acP>=1){var pq=Math.floor(acP);acP-=pq;S.fol+=pq}
 if(tf(1))S.ct=Math.max(S.ct,32)}
@@ -328,7 +338,7 @@ function rnew(){var p=RALL.filter(function(i){return !S.rq[i]});return p.length?
 function giveRel(i){S.rq[i]=1;if(S.eq.length<rslots()&&S.eq.indexOf(i)<0)S.eq.push(i)}
 function relInit(){S.rms=Math.floor(S.fol/50);var p=RALL.filter(function(i){return RQ[i].t===1});var id=p[Math.floor(Math.random()*p.length)];giveRel(id);say("Você encontra uma relíquia antiga: "+RQ[id].n+" ("+rdesc(id)+").");merRoll()}
 function relTick(){var m=Math.floor(S.fol/50);
-while(S.rms<m){S.rms++;var p=rnew();if(p){var id=rpick(mw(),p);giveRel(id);say("Marco de "+(S.rms*50)+" seguidores: uma relíquia chega até você, "+RQ[id].n+".")}}
+if(S.rms<m){var p=rnew();if(p){S.rms++;var id=rpick(mw(),p);giveRel(id);say("Marco de "+fmtN(S.rms*50)+" seguidores: uma relíquia chega até você, "+RQ[id].n+".")}else S.rms=m}
 if(Date.now()>S.merT)merRoll()}
 function merRoll(){var pool=rnew()||[],out=[];pool=pool.slice();while(out.length<5&&pool.length){var id=rpick([50,30,15,5],pool);out.push(id);pool.splice(pool.indexOf(id),1)}S.mer=out;S.merT=Date.now()+180000;lastM2=""}
 /* --- painel de relíquias --- */
@@ -514,7 +524,7 @@ function snap(){var c=JSON.parse(JSON.stringify(S));c.pz=false;return JSON.strin
 function saveSlot(k){if(S.ch===null)return false;var o=slots();o[k]={t:Date.now(),n:CH[S.ch].n,v:VL[S.vl].n,fol:Math.floor(S.fol),pts:S.pts,d:snap()};return putSlots(o)}
 function restore(str){var o=JSON.parse(str);if(!o||!o.S||o.S.ch==null||!CH[o.S.ch]||!VL[o.S.vl])throw new Error("save inválido");
 Object.keys(S).forEach(function(k){delete S[k]});Object.assign(S,o.S);
-if(S.won){S.won=false;S.vit=true}if(!S.fl)S.fl={};if(!S.hist)S.hist=[];if(!S.c)S.c={};["mil","vis","inv","sub","tp","serm","dev","diz","dec","qok"].forEach(function(k){if(!S.c[k])S.c[k]=0});S.pz=false;
+if(S.won){S.won=false}if(S.vit&&S.nm===undefined)S.nm=1;if(!S.fl)S.fl={};if(!S.hist)S.hist=[];if(!S.c)S.c={};["mil","vis","inv","sub","tp","serm","dev","diz","dec","qok"].forEach(function(k){if(!S.c[k])S.c[k]=0});S.pz=false;
 if(S.q){var t=QT[S.q.ti];if(t){S.q.pf=t.p;S.q.fail=t.x}else S.q=null}
 var g=o.g||{};for(var k in T)T[k]=(g.T&&g.T[k])||0;acL=g.acL||0;acR=g.acR||0;lost=g.lost||0;acT=g.acT||0;acP=g.acP||0;next=g.next||20;dcd=g.dcd||30;lastD=g.lastD===undefined?-1:g.lastD;
 var $=function(i){return document.getElementById(i)};
@@ -542,12 +552,6 @@ else if(SV==="code"){var ta=document.createElement("textarea");ta.id="svt";ta.ro
 if(st)svBtn(o,"Gerar código deste jogo","Copia para a área de transferência",function(){var s=btoa(unescape(encodeURIComponent(snap())));ta.value=s;try{navigator.clipboard.writeText(s).catch(function(){})}catch(e){}SVM="";});
 svBtn(o,"Carregar este código","",function(){try{if(st&&!confirm("Carregar substitui o jogo atual. Continuar?"))return;restore(decodeURIComponent(escape(atob(ta.value.trim()))))}catch(e){var p=document.createElement("p");p.textContent="Código inválido.";o.insertBefore(p,ta)}});svBtn(o,"Voltar","",function(){SV=st?"menu":"load";svDraw()})}
 else if(SV==="nw"){var p=document.createElement("p");p.textContent="O jogo atual será apagado, a não ser que esteja salvo. No novo jogo você escolhe de novo o vilarejo e o profeta, uma única vez.";o.appendChild(p);svBtn(o,"Começar novo jogo","",function(){try{sessionStorage.setItem("fanatic_new","1")}catch(e){}location.reload()});svBtn(o,"Voltar","",back)}}
-function victory(){S.pz=true;var $=function(i){return document.getElementById(i)};
-$("evi").src=LI.b34;$("evt").textContent="Mil almas";$("evd").textContent="O culto é imenso e ninguém mais duvida de você. Pontos: "+S.pts+". Você pode seguir adiante com o culto ou começar de novo.";
-var o=$("evo");o.innerHTML="";
-svBtn(o,"Continuar jogando","O culto segue crescendo",function(){$("evm").style.display="none";S.pz=false;autoSave();draw()});
-svBtn(o,"Novo jogo","Recomeça do zero",function(){try{sessionStorage.setItem("fanatic_new","1")}catch(e){}location.reload()});
-$("evm").style.display="flex"}
 function autoSave(){if(S.ch!==null&&!S.won)saveSlot("auto")}
 var next=20;
 function tick(){
@@ -563,11 +567,11 @@ if(next<=0){trigEv();next=14+Math.random()*14}
 initRel();relTick();check();draw()}
 function draw(){
 mis();tdraw();shdraw();rdraw();mdraw();
-document.getElementById("fol").textContent=Math.floor(S.fol);
-document.getElementById("fan").textContent=Math.floor(S.fan);
-document.getElementById("fe").textContent=Math.floor(S.fe);
-document.getElementById("pts").textContent=S.pts;document.getElementById("pas").textContent="Boca a boca: +"+passR().toFixed(2)+" seguidores por segundo (o rebanho cresce sozinho enquanto estiver contente)";
-document.getElementById("mn").textContent=Math.floor(S.mn);
+document.getElementById("fol").textContent=fmtN(S.fol);
+document.getElementById("fan").textContent=fmtN(S.fan);
+document.getElementById("fe").textContent=fmtN(S.fe);
+document.getElementById("pts").textContent=fmtN(S.pts);document.getElementById("pas").textContent="Boca a boca: +"+passR().toFixed(2)+" seguidores por segundo (o rebanho cresce sozinho enquanto estiver contente)";
+document.getElementById("mn").textContent=fmtN(S.mn);
 document.getElementById("cv").textContent=["revoltado","inquieto","radiante"][S.mood]+" "+Math.floor(S.ct)+"%";
 var f2=document.getElementById("fill2");f2.style.width=S.ct+"%";f2.style.background=S.ct<30?"var(--red)":"var(--ink)";
 document.getElementById("dv").textContent=Math.floor(S.sus)+"%";
