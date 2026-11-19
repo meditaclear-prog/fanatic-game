@@ -208,7 +208,7 @@ if(S.won||T[p.id]>0||(p.cur?S.mn:S.fe)<cc(p))return;
 if(p.cur)S.mn-=cc(p);else S.fe-=cc(p);T[p.id]=p.cd*cm(p);S.sus=Math.min(100,S.sus+p.sus*(S.rel.martir?0.8:1)*(S.tr.ast||1)*(1-rb("sus")/100)*(tf(6)&&p.id==="mil"?0.5:1));p.run();if(S.c[p.id]!==undefined)S.c[p.id]++;S.ct=Math.max(0,Math.min(100,S.ct+({serm:2,mil:8,vis:4,dev:-10,diz:-12,sub:-2,tp:5}[p.id]||0)));check();draw()}
 function check(){
 if(S.sus>=100){var l=Math.ceil(S.fol*(tf(7)?0.2:0.4));S.fol=Math.max(1,S.fol-l);S.fan=Math.min(S.fan,S.fol);S.sus=40;S.c.inv++;S.ct=Math.max(0,S.ct-15);say("Investigação! "+l+" seguidores fogem do culto.")}
-if(S.fol>=1000&&!S.won){S.won=true;S.pts+=2000;say("Mil almas. O culto é imenso e ninguém mais duvida de você.")}}
+if(S.fol>=1000&&!S.vit){S.vit=true;S.pts+=2000;say("Mil almas. O culto é imenso e ninguém mais duvida de você.");victory()}}
 var evs=[
 function(){var l=Math.min(S.fol-1,3);if(l>0){S.fol-=l;S.fan=Math.min(S.fan,S.fol);say("Um fiel duvida e leva "+(l-1)+" amigos consigo.")}},
 function(){var g=10+Math.floor(S.fol/5);S.fe+=g;say("Doação anônima: +"+g+" de fé.")},
@@ -514,7 +514,7 @@ function snap(){var c=JSON.parse(JSON.stringify(S));c.pz=false;return JSON.strin
 function saveSlot(k){if(S.ch===null)return false;var o=slots();o[k]={t:Date.now(),n:CH[S.ch].n,v:VL[S.vl].n,fol:Math.floor(S.fol),pts:S.pts,d:snap()};return putSlots(o)}
 function restore(str){var o=JSON.parse(str);if(!o||!o.S||o.S.ch==null||!CH[o.S.ch]||!VL[o.S.vl])throw new Error("save inválido");
 Object.keys(S).forEach(function(k){delete S[k]});Object.assign(S,o.S);
-if(!S.fl)S.fl={};if(!S.hist)S.hist=[];if(!S.c)S.c={};["mil","vis","inv","sub","tp","serm","dev","diz","dec","qok"].forEach(function(k){if(!S.c[k])S.c[k]=0});S.pz=false;
+if(S.won){S.won=false;S.vit=true}if(!S.fl)S.fl={};if(!S.hist)S.hist=[];if(!S.c)S.c={};["mil","vis","inv","sub","tp","serm","dev","diz","dec","qok"].forEach(function(k){if(!S.c[k])S.c[k]=0});S.pz=false;
 if(S.q){var t=QT[S.q.ti];if(t){S.q.pf=t.p;S.q.fail=t.x}else S.q=null}
 var g=o.g||{};for(var k in T)T[k]=(g.T&&g.T[k])||0;acL=g.acL||0;acR=g.acR||0;lost=g.lost||0;acT=g.acT||0;acP=g.acP||0;next=g.next||20;dcd=g.dcd||30;lastD=g.lastD===undefined?-1:g.lastD;
 var $=function(i){return document.getElementById(i)};
@@ -542,6 +542,12 @@ else if(SV==="code"){var ta=document.createElement("textarea");ta.id="svt";ta.ro
 if(st)svBtn(o,"Gerar código deste jogo","Copia para a área de transferência",function(){var s=btoa(unescape(encodeURIComponent(snap())));ta.value=s;try{navigator.clipboard.writeText(s).catch(function(){})}catch(e){}SVM="";});
 svBtn(o,"Carregar este código","",function(){try{if(st&&!confirm("Carregar substitui o jogo atual. Continuar?"))return;restore(decodeURIComponent(escape(atob(ta.value.trim()))))}catch(e){var p=document.createElement("p");p.textContent="Código inválido.";o.insertBefore(p,ta)}});svBtn(o,"Voltar","",function(){SV=st?"menu":"load";svDraw()})}
 else if(SV==="nw"){var p=document.createElement("p");p.textContent="O jogo atual será apagado, a não ser que esteja salvo. No novo jogo você escolhe de novo o vilarejo e o profeta, uma única vez.";o.appendChild(p);svBtn(o,"Começar novo jogo","",function(){try{sessionStorage.setItem("fanatic_new","1")}catch(e){}location.reload()});svBtn(o,"Voltar","",back)}}
+function victory(){S.pz=true;var $=function(i){return document.getElementById(i)};
+$("evi").src=LI.b34;$("evt").textContent="Mil almas";$("evd").textContent="O culto é imenso e ninguém mais duvida de você. Pontos: "+S.pts+". Você pode seguir adiante com o culto ou começar de novo.";
+var o=$("evo");o.innerHTML="";
+svBtn(o,"Continuar jogando","O culto segue crescendo",function(){$("evm").style.display="none";S.pz=false;autoSave();draw()});
+svBtn(o,"Novo jogo","Recomeça do zero",function(){try{sessionStorage.setItem("fanatic_new","1")}catch(e){}location.reload()});
+$("evm").style.display="flex"}
 function autoSave(){if(S.ch!==null&&!S.won)saveSlot("auto")}
 var next=20;
 function tick(){
